@@ -38,10 +38,34 @@ client.on('message', async message => {
   const img = guild.roles.cache.find(role => role.name === 'no img');
 
   if (message.content.includes(process.env.prefix + 'simp')) {
-    message.member.roles.add(simp).then(message.react('👍'));
+    let person = message.content
+        .split(' ')
+        .slice(1)
+        .join(' ');
+    message.member.roles.add(simp).then(db.simp.addSimp(message.author.username, person)).then(message.react('👍'));
   }
   if (message.content.includes(process.env.prefix + 'rmsimp')) {
-    message.member.roles.remove(simp).then(message.react('👍'));
+    message.member.roles.remove(simp).then(db.simp.delSimp(message.author.username)).then(message.react('👍'));
+  }
+      if (message.content.includes(process.env.prefix + 'simpList')) {
+    if (whitelisted) {
+     const list = await db.simp.list();
+      let fields = [];
+      let i = 0
+      list.forEach(v => {
+        i++
+        fields.push({ name: i + '.', value: `${v.user} - ${v.for}`, inline: true })
+      });
+      message.channel.send(
+        new Discord.MessageEmbed()
+          .setTitle(`${client.user.tag}'s simp list:`)
+          .setColor('RANDOM')
+          .addFields(fields))
+        ();
+    }
+    else {
+      return message.channel.send("you're not whitelisted");
+    }
   }
   if (message.content.includes(process.env.prefix + 'add')) {
     if (message.author.id === '564164277251080208') {
@@ -106,6 +130,7 @@ client.on('message', async message => {
           new Discord.MessageEmbed()
             .setTitle(member['user'].tag)
             .addField('Reason: ', "```" + value.reason + "```", true)
+            .addField('Muted By: ', "```" + value.by + "```")
             .addField('Duration: ', "```" + value.time + " minutes```", true)
             .setColor('RANDOM')
         );
@@ -146,7 +171,7 @@ client.on('message', async message => {
         .join(' ');
 
       member = message.mentions.members.first();
-      db.mod.set(member['user'].username, args[1], reason);
+      db.mod.set(member['user'].username, args[1], reason, message.author.tag);
       member.roles
         .add(hmms)
         .then(
@@ -232,7 +257,7 @@ client.on('message', async message => {
       member = message.member;
       member.roles
         .add(role)
-        .then(db.mod.set(message.author.username, '1', 'saying a prohibited word'));
+        .then(db.mod.set(message.author.username, '1', 'saying a prohibited word', client.user.tag));
       setTimeout(function() {
         member.roles.remove(role);
         db.mod.delete(message.author.username);

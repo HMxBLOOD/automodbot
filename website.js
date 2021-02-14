@@ -26,7 +26,7 @@ app.get('/ping', (req, res) => {
 io.on('connection', socket => {
   socket.on('editReason', async (user, reason) => {
     let result = await db.mod.get(user);
-    db.mod.update(user, result.time, reason).then(() => {
+    db.mod.update(user, result.time, reason, result.by).then(() => {
       io.emit('updated', 'reason updated')
     })
   });
