@@ -1,6 +1,5 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-const { bannedwords } = require('./config');
 const AntiSpam = require('discord-anti-spam');
 const website = require('./website');
 db = require('./database/mongo');
@@ -200,6 +199,15 @@ client.on('message', async message => {
       return message.channel.send("you aren't whitelisted")
     }
   }
+  if (message.content.startsWith(`${prefix}banWord`)) {
+    if (whitelisted) {
+      db.bannedwords.addWord(args[0])
+      message.channel.send('banned word')
+    }
+    else {
+      return message.channel.send("you're not whitelisted");
+    }
+  }
   if (message.content.includes(process.env.prefix + 'unmute')) {
     if (whitelisted) {
       const hmms = guild.roles.cache.find(role => role.name === 'Muted');
@@ -218,18 +226,8 @@ client.on('message', async message => {
   if (whitelisted) {
     return;
   } else {
-    let foundInText = false;
-    for (let i in bannedwords) {
-      if (
-        message.content
-          .replace(' ', '')
-          .toLowerCase()
-          .includes(bannedwords[i])
-      )
-        foundInText = true;
-    }
-
-    if (foundInText) {
+    let bannedwords = await db.bannedwords.check(message.content.replace(' ', '').toLowerCase());
+    if (bannedwords) {
       message.delete();
       member = message.member;
       member.roles

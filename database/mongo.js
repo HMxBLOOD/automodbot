@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 const mutedSchema = require('./schema/mutedSchema');
 const whitelistSchema = require('./schema/whitelistSchema.js')
+const bannedWordsSchema = require('./schema/bannedWordsSchema.js')
 
 module.exports = {
   mutedSchema: require('./schema/mutedSchema'),
   whitelistSchema: require('./schema/whitelistSchema.js'),
+  bannedWordsSchema: require('./schema/bannedWordsSchema.js'),
+
 
   async connect(uri) {
     await mongoose.connect(
@@ -16,6 +19,30 @@ module.exports = {
       }
     );
     console.log('Connected to database!');
+  },
+  bannedwords: {
+    async addWord(word) {
+      const res = await bannedWordsSchema.findOneAndUpdate(
+        {
+          word: word,
+        },
+        {
+          word: word,
+        },
+        {
+          upsert: true
+        }
+      );
+      return res;
+    },
+    async delWord(word) {
+      const res = await bannedWordsSchema.deleteOne({ word: word });
+      return res;
+    },
+    async check(word) {
+      const res = await bannedWordsSchema.findOne({ word: word });
+      return res;
+    },
   },
   whitelist: {
     async addUser(id) {
